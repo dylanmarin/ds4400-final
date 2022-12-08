@@ -131,3 +131,4 @@ dmypy.json
 data/flickr_8k/Images/
 data/flickr_30k/flickr30k_images/
 8k_features.pkl
+30k_features.pkl
