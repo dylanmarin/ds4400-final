@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 data/flickr_8k/Images/
-data/flickr_30k/Images/
+data/flickr_30k/flickr30k_images/
