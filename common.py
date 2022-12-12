@@ -3,6 +3,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from keras_preprocessing.text import Tokenizer
 
+import gc
+from keras.backend  import set_session, clear_session, get_session
+import tensorflow as tf
 
 RANDOM_SEED = 42
 
@@ -135,3 +138,30 @@ def get_tokenizer_from_samples(samples):
     tokenizer = Tokenizer()
     tokenizer.fit_on_texts(list(samples['caption']))
     return tokenizer
+
+
+def reset_keras(model):
+    '''
+    utility function to reset gpu memory
+    
+    Code from:
+    https://github.com/keras-team/keras/issues/12625
+    https://forums.fast.ai/t/how-could-i-release-gpu-memory-of-keras/2023/18
+    '''
+    sess = get_session()
+    clear_session()
+    sess.close()
+    sess = get_session()
+
+    try:
+        del model
+    except:
+        pass
+
+    gc.collect()
+    print('Garbage collected.')
+
+    config = tf.compat.v1.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = 1
+    config.gpu_options.visible_device_list = "0"
+    set_session(tf.compat.v1.Session(config=config))
