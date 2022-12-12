@@ -182,7 +182,7 @@ class LogisticDecoder():
             
             current_model = generate_logistic_model(4096 + i + 1, self.vocab_size)
 
-            current_model.fit_generator(current_generator)
+            current_model.fit(current_generator)
 
             # save the model to a designated parent folder
             save_path = f'{model_save_directory}/decoder{i+1}'

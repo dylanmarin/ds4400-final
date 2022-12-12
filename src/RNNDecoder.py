@@ -76,15 +76,17 @@ def generate_RNN_with_dropout(vocab_size, max_length, opt='adam'):
 
 class RNNModel():
 
-    def __init__(self, dropout_layer, samples):
+    def __init__(self, dropout_layer, samples, optimizer='adam'):
         if dropout_layer:
             self.generate_func = generate_RNN_with_dropout
         else:
             self.generate_func = generate_RNN_no_dropout
+        self.optimizer = optimizer
         self.tokenizer = get_tokenizer_from_samples(samples)
         self.vocab_size = len(self.tokenizer.word_index) + 1
         self.max_len = max_and_average_sequence_length(samples)[0]
-        self.model = None
+        self.model = self.generate_func(
+            self.vocab_size, self.max_len, opt=self.optimizer)
 
     def create_sequences(self, image_vector, captions):
         '''
@@ -146,18 +148,16 @@ class RNNModel():
                     img_features, descriptions)
                 yield [in_img, in_seq], out_word
 
-    def create_train_save_model(self, input_dict, save_path, epochs=1, optimizer='adam'):
+    def train_save_model(self, input_dict, save_path, epochs=1):
         '''
 
         '''
-        self.model = self.generate_func(
-            self.vocab_size, self.max_len, opt=optimizer)
         generator = self.data_generator(input_dict, epochs)
         self.model.fit(generator)
-        self.model.save(save_path)
+        self.model.save(save_path, save_format='h5')
         return self.model
 
-    def generate_caption(self, image_filename):
+    def generate_caption(self, image_filename, verbose=True):
         '''
         given a keras model, and an image_filename
 
@@ -199,6 +199,10 @@ class RNNModel():
 
         # remove start token (end is never appended)
         tokens = tokens[1:]
+        
+        if verbose:
+            print(f'caption generated for {image_filename}: {tokens}')
+        
         return tokens
 
     def generate_captions_for_files(self, filenames):
@@ -211,4 +215,7 @@ class RNNModel():
         return output
 
     def load(self, filepath):
-        self.model = load_model(filepath)
+        # load the saved weights    
+        self.model.load_weights(filepath)
+        print('model loaded successfully!')
+        return
