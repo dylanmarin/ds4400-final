@@ -1,7 +1,7 @@
 from pickle import load
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
+from keras_preprocessing.text import Tokenizer
 
 
 RANDOM_SEED = 42
@@ -19,6 +19,8 @@ TEST_FILENAMES, VALIDATION_FILENAMES = train_test_split(TEST_FILENAMES, test_siz
 # define a combined training plus validatoin set
 TRAIN_AND_VAL_FILENAMES = TRAIN_FILENAMES + VALIDATION_FILENAMES
 
+START_TOK = '<start>'
+END_TOK = '<end>'
 
 def clean_string(text):
     '''
@@ -123,3 +125,13 @@ def max_and_average_sequence_length(sequences):
     print(f'The longest sequence length from the training and validation samples is {MAX_LENGTH}')
     print(f'The average sequence length from the training and validation samples is {AVG_LENGTH}')
     return MAX_LENGTH, AVG_LENGTH
+
+
+def get_tokenizer_from_samples(samples):
+    '''
+    given a dataframe of samples (where the caption column is tokenized captions), 
+    create a tokenizer from the given captions 
+    '''
+    tokenizer = Tokenizer()
+    tokenizer.fit_on_texts(list(samples['caption']))
+    return tokenizer
