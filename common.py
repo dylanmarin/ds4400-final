@@ -16,7 +16,7 @@ get the filenames for the training, validation, and test sets
 ALL_FILENAMES = list(set(pd.read_csv('data/flickr_8k/captions.txt')['image']))
 TRAIN_FILENAMES = list(set(pd.read_csv('data/flickr_8k/train.txt')['image']))
 TEST_FILENAMES = list(set(pd.read_csv('data/flickr_8k/test.txt')['image']))
-VAL_FILENAMES = list(set(pd.read_csv('data/flickr_8k/validation.txt')['image']))
+VALIDATION_FILENAMES = list(set(pd.read_csv('data/flickr_8k/validation.txt')['image']))
 TRAIN_AND_VAL_FILENAMES = list(set(pd.read_csv('data/flickr_8k/train_and_val.txt')['image']))
 
 
