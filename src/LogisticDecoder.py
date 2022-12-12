@@ -1,4 +1,4 @@
-from common import START_TOK, END_TOK, reset_keras, RANDOM_SEED, import_image_features, ALL_FILENAMES
+from common import START_TOK, END_TOK, reset_keras, RANDOM_SEED, import_image_features, ALL_FILENAMES, get_tokenizer_from_samples
 import numpy as np
 from tensorflow.keras.layers import ReLU
 from tensorflow.keras.layers import Dense
@@ -7,7 +7,7 @@ from keras.models import load_model
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
 
-all_image_features = import_image_features('../data8k_features.pkl', ALL_FILENAMES)
+all_image_features = import_image_features('../data/flickr_8k/8k_features.pkl', ALL_FILENAMES)
 
 def get_samples_of_specific_size(image_vector, descriptions, desired_caption_size, tokenizer):
     '''
@@ -147,7 +147,7 @@ class LogisticDecoder():
         the model predicts the 4th word
     '''
 
-    def __init__(self, caption_max_length, tokenizer):
+    def __init__(self, caption_max_length, samples):
         '''
         given a max caption length N, initalize N logistic regression models, one for each position in our caption length
         given a tokenizer, store it in the model
@@ -155,10 +155,10 @@ class LogisticDecoder():
         self.max_len = caption_max_length
 
         # store the tokenizer for later use
-        self.tokenizer = tokenizer
+        self.tokenizer = get_tokenizer_from_samples(samples)
         
         # get the vocab size (add one due to the way keras tokenizer works)
-        self.vocab_size = len(tokenizer.word_index) + 1
+        self.vocab_size = len(self.tokenizer.word_index) + 1
 
         # generate a model that takes in an image feature vector, and the caption so far, and outputs the next word
         self.models = [None for i in range(caption_max_length)]
