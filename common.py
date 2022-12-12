@@ -11,16 +11,14 @@ RANDOM_SEED = 42
 
 '''
 get the filenames for the training, validation, and test sets
-
-split the train/val/test 80/10/10
 '''
-# get all of the filenames from the dataset 
+# get the specific set filenames from the dataset 
 ALL_FILENAMES = list(set(pd.read_csv('data/flickr_8k/captions.txt')['image']))
-# split the filenames into train test val 80-10-10
-TRAIN_FILENAMES, TEST_FILENAMES = train_test_split(ALL_FILENAMES, test_size=0.2, random_state=RANDOM_SEED)
-TEST_FILENAMES, VALIDATION_FILENAMES = train_test_split(TEST_FILENAMES, test_size=0.5, random_state=RANDOM_SEED) 
-# define a combined training plus validatoin set
-TRAIN_AND_VAL_FILENAMES = TRAIN_FILENAMES + VALIDATION_FILENAMES
+TRAIN_FILENAMES = list(set(pd.read_csv('data/flickr_8k/train.txt')['image']))
+TEST_FILENAMES = list(set(pd.read_csv('data/flickr_8k/test.txt')['image']))
+VAL_FILENAMES = list(set(pd.read_csv('data/flickr_8k/validation.txt')['image']))
+TRAIN_AND_VAL_FILENAMES = list(set(pd.read_csv('data/flickr_8k/train_and_val.txt')['image']))
+
 
 START_TOK = '<start>'
 END_TOK = '<end>'
