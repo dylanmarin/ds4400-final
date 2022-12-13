@@ -205,13 +205,13 @@ class RNNModel():
         
         return tokens
 
-    def generate_captions_for_files(self, filenames):
+    def generate_captions_for_files(self, filenames, verbose=True):
         '''
         given a list of filenames, output a list with one generated caption for each filename
         '''
         output = []
         for filename in filenames:
-            output.append(self.generate_caption(filename))
+            output.append(self.generate_caption(filename, verbose))
         return output
 
     def load(self, filepath):
