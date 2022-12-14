@@ -1,12 +1,9 @@
 from common import ALL_FILENAMES, START_TOK, END_TOK
 from common import get_tokenizer_from_samples, import_image_features, max_and_average_sequence_length, RANDOM_SEED
-from keras.models import load_model
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-
 from tensorflow.keras.layers import Dropout, Embedding, LSTM, Dense, Input, add
 from keras.models import Model
-
 import numpy as np
 import tensorflow as tf
 
@@ -15,9 +12,13 @@ all_image_features = import_image_features(
     '../data/flickr_8k/8k_features.pkl', ALL_FILENAMES)
 
 
-# define the RNN model to predict image captions
 def generate_RNN_no_dropout(vocab_size, max_length, opt='adam'):
-
+    '''
+    this function generates an RNN keras model that does not use dropout layers
+    vocab_size: is the size of the output layer
+    max_length: determines the size of the text input layer. text input will need to be padded if the sequence being given is less than the full length 
+    opt: the optimizer to use when compiling the model
+    '''
     # first input - VGG generated image features
     image_input = Input(shape=(4096,))
     condensed_image = Dense(256, activation='relu')(image_input)
@@ -41,10 +42,13 @@ def generate_RNN_no_dropout(vocab_size, max_length, opt='adam'):
     return model
 
 
-# define the RNN model that uses dropout layers to avoid overfitting
-# model will be used to generate image captions
 def generate_RNN_with_dropout(vocab_size, max_length, opt='adam'):
-
+    '''
+    this function generates an RNN keras model that includes 2 dropout layers
+    vocab_size: is the size of the output layer
+    max_length: determines the size of the text input layer. text input will need to be padded if the sequence being given is less than the full length 
+    opt: the optimizer to use when compiling the model
+    '''
     # first input - VGG generated image features
     image_input = Input(shape=(4096,))
 
@@ -75,8 +79,19 @@ def generate_RNN_with_dropout(vocab_size, max_length, opt='adam'):
 
 
 class RNNModel():
-
+    '''
+    This model is a wrapper class to define both of our RNN model types
+    It can be used to train, save, and load RNN models, both with and without dropout layers
+    '''
     def __init__(self, dropout_layer, samples, optimizer='adam'):
+        '''
+        initialize our RNN model class
+        dropout_layer: boolean - whether to include the two dropout layers or not
+        samples: the samples that this model will be trained with. it is used to 
+            learn the vocabulary for the tokenizer that will convert words to their 
+            indices and back
+        optimizer: the optimizer that will be used to compile the model with
+        '''
         if dropout_layer:
             self.generate_func = generate_RNN_with_dropout
         else:
@@ -93,8 +108,6 @@ class RNNModel():
         Given:
         - one image vector representing a single image
         - one value from our samples dict for the corresponding image (a list of 5 tokenized captions)
-        - a tokenizer for converting words to indics and indices back to words
-
 
         For each caption: 
             Break it into samples where for i in range N <= len(caption-1):
@@ -111,24 +124,39 @@ class RNNModel():
         # next word
         y = []
 
+        # reshape the image vector for the model input
         image_vector = image_vector.reshape(-1,)
 
+        # convert the words (strings) descriptions corresponding to this image into numbers using the tokenizer 
         descriptions = self.tokenizer.texts_to_sequences(captions)
+        
+        # for each caption/description
         for description in descriptions:
+            # for each position in the description (except for the last) create a sample
             for i in range(len(description) - 1):
+                # where x1 input is the image vector
                 X1.append(image_vector)
-
-                # padding x2 to always be max sequence length
+                
+                # x2 is the sequence so far
+                # pad the sequence x2 to always be max sequence length
                 x2 = pad_sequences([description[:i + 1]],
                                    maxlen=self.max_len, padding='post')[0]
                 X2.append(x2)
+                
+                # y is the next word in the sequence encoded as a 1-hot vector
+                # vector is the size of the vocab and the index corresponding to the next word is 1
                 y.append(to_categorical(description[i+1], self.vocab_size))
 
         return tf.convert_to_tensor(np.asarray(X1)), tf.convert_to_tensor(np.asarray(X2)), tf.convert_to_tensor(y)
 
-    # data generator, intended to be used in a call to model.fit_generator()
-
+    
     def data_generator(self, filename_description_dictionary, epochs):
+        '''
+        create a python generator to be used in training
+        filename_description_dictionary: dictoinary of samples where the key is the 
+            image filename and the value is the five corresponding captions
+        epochs: the number of times to loop the generator (since they are traditionally one use)
+        '''
         for _ in range(epochs):
             np.random.seed(RANDOM_SEED)
 
@@ -142,15 +170,22 @@ class RNNModel():
                 descriptions = filename_description_dictionary[filename]
 
                 # retrieve the photo feature
-                img_features = all_image_features[filename][0]
+                image_feature_vector = all_image_features[filename][0]
 
-                in_img, in_seq, out_word = self.create_sequences(
-                    img_features, descriptions)
-                yield [in_img, in_seq], out_word
+                image_input, sequence_input, next_word = self.create_sequences(
+                    image_feature_vector, descriptions)
+                yield [image_input, sequence_input], next_word
 
     def train_save_model(self, input_dict, save_path, epochs=1):
         '''
-
+        train and save the model
+        input_dict: the dictionary of samples to train from
+            key is image filename, value is 5 corresponding captions
+        save_path: is the path to save the model to
+        epochs: is the number of epochs to iterate through the training data
+        
+        this saves the weights to an h5 format which is an older format, but 
+        solved an issue we were having with loading
         '''
         generator = self.data_generator(input_dict, epochs)
         self.model.fit(generator)
@@ -162,8 +197,13 @@ class RNNModel():
         given a keras model, and an image_filename
 
         use the model to generate a caption token by token
+        
+        imports the features for the given image filename (previously extracted)
 
-        randomly samples next token from models output probabilities    
+        randomly samples next token from models output probabilities and uses the 
+        whole caption including the next word for the next position
+        
+        generates until it either reaches the maximum length or generates the <end> token
         '''
         np.random.seed(RANDOM_SEED)
 
@@ -208,6 +248,8 @@ class RNNModel():
     def generate_captions_for_files(self, filenames, verbose=True):
         '''
         given a list of filenames, output a list with one generated caption for each filename
+        
+        uses the generate_caption function to generate a captions for each filename
         '''
         output = []
         for filename in filenames:
@@ -215,7 +257,10 @@ class RNNModel():
         return output
 
     def load(self, filepath):
-        # load the saved weights    
+        '''
+        given the filepath that a model was previously saved to,
+        load the weights into this model
+        '''
         self.model.load_weights(filepath)
         print('model loaded successfully!')
         return
