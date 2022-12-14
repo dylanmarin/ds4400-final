@@ -1,5 +1,5 @@
 # ds4400-final: Image Caption Generation
-This is Dylan Marin and Julia Geller's final project
+This is Dylan Marin and Julia Geller's final project.
 All of the code required to extract features using VGG and to train models is present. However, we made use of saving and loading our trained models. These models and feature files were unable to be uploaded, so there are links to download our entire models folder via Google Drive below. You 
 
 Note about running the code: 
