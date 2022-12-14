@@ -134,3 +134,4 @@ data/flickr_30k/flickr30k_images/
 30k_features.pkl
 
 backup/
+models/*
