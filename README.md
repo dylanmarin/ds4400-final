@@ -47,3 +47,4 @@ This folder is where we stored our data.
 ### data:
     kaggle: https://www.kaggle.com/datasets/adityajn105/flickr8k?select=captions.txt
     extracted_features: https://drive.google.com/file/d/1U7SmHFVpccIjFDVdCO42gXNquHeFlIOx/view?usp=sharing
+    models: https://drive.google.com/drive/folders/1Mo4PKAL_zx9v1o-0KZvThNtUQlv29yV8?usp=sharing
